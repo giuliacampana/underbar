@@ -186,12 +186,22 @@
   // Determine whether all of the elements match a truth test.
   _.every = function(collection, iterator) {
     // TIP: Try re-using reduce() here.
+    iterator = iterator || _.identity;
+
+    return !!_.reduce(collection, function(doesMatch, item) {
+      return iterator(item) && doesMatch;
+    }, true);
   };
 
   // Determine whether any of the elements pass a truth test. If no iterator is
   // provided, provide a default one
   _.some = function(collection, iterator) {
     // TIP: There's a very clever way to re-use every() here.
+    iterator = iterator || _.identity;
+
+    return !_.every(collection, function(item) {
+      return !iterator(item);
+    }); 
   };
 
 
@@ -214,11 +224,25 @@
   //     bla: "even more stuff"
   //   }); // obj1 now contains key1, key2, key3 and bla
   _.extend = function(obj) {
+    _.each(arguments, function(originalObj) {
+      _.each(originalObj, function(value, key) {
+        obj[key] = value;
+      });
+    });
+    return obj;
   };
 
   // Like extend, but doesn't ever overwrite a key that already
   // exists in obj
   _.defaults = function(obj) {
+    _.each(arguments, function(sourceObj) {
+      _.each(sourceObj, function(value, key) {
+        if (obj[key] === undefined) {
+          obj[key] = value; 
+        }
+      });
+    });
+    return obj;
   };
 
 
@@ -262,6 +286,16 @@
   // already computed the result for the given argument and return that value
   // instead if possible.
   _.memoize = function(func) {
+    var storage = {};
+
+    return function() {
+      var inputs = JSON.stringify(arguments);
+
+      if (!storage.hasOwnProperty(inputs)) {
+        storage[inputs] = func.apply(this, arguments);
+      }
+      return storage[inputs];
+    }
   };
 
   // Delays a function for the given number of milliseconds, and then calls
@@ -271,6 +305,10 @@
   // parameter. For example _.delay(someFunction, 500, 'a', 'b') will
   // call someFunction('a', 'b') after 500ms
   _.delay = function(func, wait) {
+    var args = Array.prototype.slice.call(arguments, 2);
+    setTimeout(function() {
+      func.apply(this, args);
+    }, wait); 
   };
 
 
@@ -285,6 +323,15 @@
   // input array. For a tip on how to make a copy of an array, see:
   // http://mdn.io/Array.prototype.slice
   _.shuffle = function(array) {
+    var copy = array.slice(0);
+    var shuffled = [];
+
+    while (copy.length !== 0) {
+      var randomIndex = Math.floor(copy.length * Math.random());
+      shuffled.push(copy[randomIndex]);
+      copy.splice(randomIndex, 1);
+    }
+    return shuffled;
   };
 
 
@@ -299,6 +346,10 @@
   // Calls the method named by functionOrKey on each value in the list.
   // Note: You will need to learn a bit about .apply to complete this.
   _.invoke = function(collection, functionOrKey, args) {
+    return _.map(collection, function(item) {
+      var method = typeof functionOrKey === 'string' ? item[functionOrKey] : functionOrKey;
+      return method.apply(item, args);
+    });
   };
 
   // Sort the object's values by a criterion produced by an iterator.
@@ -306,6 +357,11 @@
   // of that string. For example, _.sortBy(people, 'name') should sort
   // an array of people by their name.
   _.sortBy = function(collection, iterator) {
+    var isString = typeof iterator === 'string';
+
+    return collection.sort(function(a, b) {
+      return isString ? a[iterator] - b[iterator] : iterator(a) - iterator(b);
+    });
   };
 
   // Zip together two or more arrays with elements of the same index
@@ -314,6 +370,18 @@
   // Example:
   // _.zip(['a','b','c','d'], [1,2,3]) returns [['a',1], ['b',2], ['c',3], ['d',undefined]]
   _.zip = function() {
+    var longerArrayLength = 0;
+    var result = new Array(longerArrayLength);
+
+    _.each(arguments, function(arg) {
+      longerArrayLength = Math.max(arg.length, longerArrayLength);
+    });
+
+    for (var i = 0; i < longerArrayLength; i++) {
+      result[i] = _.pluck(arguments, i);
+    }
+
+    return result;
   };
 
   // Takes a multidimensional array and converts it to a one-dimensional array.
@@ -321,11 +389,15 @@
   //
   // Hint: Use Array.isArray to check if something is an array
   _.flatten = function(nestedArray, result) {
+    return _.reduce(nestedArray, function(accum, innerArray) {
+      return accum.concat(Array.isArray(innerArray) ? _.flatten(innerArray) : [innerArray]);
+    }, []);
   };
 
   // Takes an arbitrary number of arrays and produces an array that contains
   // every item shared between all the passed-in arrays.
   _.intersection = function() {
+    
   };
 
   // Take the difference between one array and a number of other arrays.
