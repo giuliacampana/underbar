@@ -370,17 +370,21 @@
   // Example:
   // _.zip(['a','b','c','d'], [1,2,3]) returns [['a',1], ['b',2], ['c',3], ['d',undefined]]
   _.zip = function() {
-    var longerArrayLength = 0;
-    var result = new Array(longerArrayLength);
+    var longestArrayLength = 0;
+    var result = new Array(longestArrayLength);
 
     _.each(arguments, function(arg) {
-      longerArrayLength = Math.max(arg.length, longerArrayLength);
+      longestArrayLength = Math.max(arg.length, longestArrayLength);
     });
-
-    for (var i = 0; i < longerArrayLength; i++) {
-      result[i] = _.pluck(arguments, i);
+    
+    var eachNewArray = [];
+    for (var i = 0; i < longestArrayLength; i++) {
+      for (var a = 0; a < arguments.length; a++) {
+        eachNewArray.push(arguments[a][i]);
+      }
+      result.push(eachNewArray);
+      eachNewArray = [];
     }
-
     return result;
   };
 
@@ -397,12 +401,48 @@
   // Takes an arbitrary number of arrays and produces an array that contains
   // every item shared between all the passed-in arrays.
   _.intersection = function() {
-    
+    var args = Array.prototype.slice.call(arguments);
+    var shared = [];
+
+    _.each(args[0], function(item) {
+      var isShared = false;
+
+      for (var i = 1; i < args.length; i++) {
+        _.each(args[i], function(itemToCompare) {
+          if (item === itemToCompare) {
+            isShared = true;
+          }
+        });
+      }
+      if (isShared) {
+        shared.push(item);
+      }      
+    });
+    return shared;
   };
 
   // Take the difference between one array and a number of other arrays.
   // Only the elements present in just the first array will remain.
   _.difference = function(array) {
+    var args = Array.prototype.slice.call(arguments);
+    var different = [];
+
+    _.each(args[0], function(item) {
+      var isDifferent = true;
+
+      for (var i = 1; i < args.length; i++) {
+        _.each(args[i], function(itemToCompare) {
+          if (item === itemToCompare) {
+            isDifferent = false;
+          }
+        });
+      }
+
+      if (isDifferent) {
+        different.push(item);
+      }
+    }); 
+    return different;
   };
 
   // Returns a function, that, when invoked, will only be triggered at most once
